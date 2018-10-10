@@ -1,0 +1,24 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t axellundback/react-test -f ./client/Dockerfile.dev .
+
+script:
+  - docker run axellundback/react-test npm run test -- --coverage
+
+after_success:
+  - docker build -t axellundback/multi-client ./client
+  - docker build -t axellundback/multi-nginx ./nginx
+  - docker build -t axellundback/multi-server ./server
+  - docker build -t axellundback/multi-worker ./worker
+
+  # Log in to docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+
+  # Push images to docker hub
+  - docker push axellundback/multi-client
+  - docker push axellundback/multi-nginx
+  - docker push axellundback/multi-server
+  - docker push axellundback/multi-worker
